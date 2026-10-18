@@ -1,0 +1,25 @@
+"county","component","value"
+"Butler","Natural change",-1.55123995952838
+"Cameron","Natural change",-5.56778169014085
+"Cumberland","Natural change",-0.0859474063539414
+"Philadelphia","Natural change",1.05867315126574
+"Pike","Natural change",-1.96209016393443
+"Westmoreland","Natural change",-3.0887715132527
+"Butler","Domestic migration",4.55357327221293
+"Cameron","Domestic migration",-1.69454225352113
+"Cumberland","Domestic migration",5.93422518220465
+"Philadelphia","Domestic migration",-6.65008105748846
+"Pike","Domestic migration",8.67486338797814
+"Westmoreland","Domestic migration",1.43398184469004
+"Butler","International migration",0.409362159036941
+"Cameron","International migration",0.0440140845070423
+"Cumberland","International migration",1.11461838195336
+"Philadelphia","International migration",3.62164858461155
+"Pike","International migration",0.650614754098361
+"Westmoreland","International migration",0.190915576962666
+"Butler","Residual",-0.0805302607941523
+"Cameron","Residual",-0.110035211267606
+"Cumberland","Residual",-0.0990514952150805
+"Philadelphia","Residual",0.129193166230203
+"Pike","Residual",-0.109289617486339
+"Westmoreland","Residual",-0.0259442142992101
