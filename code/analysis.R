@@ -1,11 +1,8 @@
-# Blog 5: Pennsylvania population change and migration
-# Open BLOG5.Rproj, then run source("code/analysis.R") from the project root.
-# Install once: install.packages(c("dplyr", "ggplot2", "sf"))
 library(dplyr)
 library(ggplot2)
 library(sf)
 
-# 1. Download official data once; keep the snapshot for reproduction.
+# Download data
 dir.create("data/raw", recursive = TRUE, showWarnings = FALSE)
 dir.create("results/tables", recursive = TRUE, showWarnings = FALSE)
 dir.create("results/figures", recursive = TRUE, showWarnings = FALSE)
@@ -17,13 +14,12 @@ boundary_file <- "data/raw/cb_2023_us_county_5m.zip"
 if (!file.exists(population_file)) download.file(population_url, population_file, mode = "wb")
 if (!file.exists(boundary_file)) download.file(boundary_url, boundary_file, mode = "wb")
 
-# 2. Select Pennsylvania counties, not the state total.
+# Keep PA counties
 raw <- read.csv(population_file, encoding = "latin1")
 pa <- raw %>% filter(STATE == 42, SUMLEV == 50)
 stopifnot(nrow(pa) == 67, !anyDuplicated(pa$COUNTY))
 
-# The 2020 components cover April-June. Adding 2020:2025 therefore matches
-# April 1, 2020 (estimates base) to July 1, 2025, not July 2020 to July 2025.
+# The 2020 fields cover April-June; sum through 2025 for the full period.
 years <- 2020:2025
 pa$births <- rowSums(pa[paste0("BIRTHS", years)])
 pa$deaths <- rowSums(pa[paste0("DEATHS", years)])
@@ -44,7 +40,7 @@ counties <- pa %>% transmute(
   migration_pct = 100 * migration / population_2020,
   residual_pct = 100 * residual / population_2020
 )
-# Missing values must not silently become zero; preserve the accounting identity.
+# Check missing values and component totals
 stopifnot(!anyNA(counties), all(counties$population_2020 > 0))
 stopifnot(all(counties$change == counties$natural + counties$migration + counties$residual))
 stopifnot(all(counties$migration == rowSums(pa[paste0("NETMIG", years)])))
@@ -67,8 +63,7 @@ stopifnot(sum(counties$population_2020) == official_state$ESTIMATESBASE2020)
 write.csv(state, "results/tables/state_summary.csv", row.names = FALSE)
 print(state)
 
-# 3. Read county polygons and join by FIPS code, not by county name.
-# Extract to a temporary directory: the original ZIP stays in data/raw.
+# Join county boundaries
 shape_folder <- tempfile("county_shapes_")
 dir.create(shape_folder)
 unzip(boundary_file, exdir = shape_folder)
@@ -79,7 +74,7 @@ stopifnot(nrow(boundaries) == 67, !anyDuplicated(boundaries$GEOID),
 map_data <- left_join(boundaries, counties, by = "GEOID")
 stopifnot(!anyNA(map_data$growth_pct), !anyNA(map_data$migration_pct))
 
-# Six contrasting examples, not a random sample or a ranking of all counties.
+# Counties used for comparison
 examples <- c("Pike", "Cumberland", "Butler", "Westmoreland", "Philadelphia", "Cameron")
 labels <- map_data %>% filter(county %in% examples)
 labels <- suppressWarnings(st_point_on_surface(labels))
@@ -92,7 +87,7 @@ map_theme <- theme_void(base_size = 13) + theme(
   legend.position = "bottom", legend.title = element_text(size = 11),
   plot.margin = margin(15, 20, 15, 20), plot.background = element_rect(fill = "white", color = NA)
 )
-# Both maps use identical symmetric limits: orange = negative, blue = positive.
+# Use the same color scale for both maps
 limit <- ceiling(max(abs(c(counties$growth_pct, counties$migration_pct))))
 map1 <- ggplot(map_data) +
   geom_sf(aes(fill = growth_pct), color = "white", linewidth = 0.25) +
@@ -111,7 +106,7 @@ map2 <- ggplot(map_data) +
   labs(title = "Where does migration add population?", subtitle = period, caption = source_note) +
   map_theme
 
-# 4. Explain the map with population-change components in selected counties.
+# Compare population-change components
 selected <- counties %>% filter(county %in% examples)
 components <- bind_rows(
   selected %>% transmute(county, component = "Natural change", value = natural_pct),

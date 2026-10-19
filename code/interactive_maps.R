@@ -1,5 +1,4 @@
-# Run after analysis.R, from the BLOG5 project root.
-# install.packages(c("leaflet", "htmlwidgets"))
+# Run analysis.R first
 library(dplyr)
 library(sf)
 library(leaflet)
@@ -15,7 +14,7 @@ boundaries <- st_read(file.path(folder, "cb_2023_us_county_5m.shp"), quiet = TRU
 map_data <- left_join(boundaries, counties, by = "GEOID")
 stopifnot(nrow(map_data) == 67, !anyNA(map_data$growth_pct), !anyNA(map_data$migration_pct))
 
-# The full values are available on hover; click keeps the same panel open.
+# County popup text
 info <- sprintf(
   paste0("<strong>%s County</strong><br>April 2020 base: %s<br>July 2025 population: %s",
          "<br>Population change: %s (%+.2f%%)",
@@ -37,7 +36,7 @@ limit <- ceiling(max(abs(c(map_data$growth_pct, map_data$migration_pct))))
 palette <- colorNumeric(c("#BA552A", "#F7F7F2", "#176385"), domain = c(-limit, limit))
 bounds <- st_bbox(map_data)
 
-# A short loop draws the same interface for the two different measures.
+# Make both maps
 measures <- c("growth_pct", "migration_pct")
 titles <- c("Population change (%)", "Net migration / starting population (%)")
 files <- c("population_change.html", "net_migration.html")
@@ -57,8 +56,6 @@ for (i in 1:2) {
                position = "topright") %>%
     addControl("Source: U.S. Census Bureau, Vintage 2025.<br>Cumulative percentages, not annual rates.",
                position = "bottomleft")
-  # No external map tiles: polygons, data, and JS/CSS are embedded in the HTML.
-  # RStudio supplies Pandoc; outside RStudio, make Pandoc available first.
   html_file <- file.path(tempdir(), files[i])
   saveWidget(map, html_file, selfcontained = TRUE,
              title = titles[i], background = "#f4f6f7")
